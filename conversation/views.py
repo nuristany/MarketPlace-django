@@ -1,7 +1,9 @@
+from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from item.models import Item
 from django.contrib.auth.decorators import login_required
-from .models import Conversation
+from django.contrib.auth.decorators import login_required
+from .models import Conversation, ConversationMessage
 from . forms import ConversationMessageForm, ConversationMessageForm
 
 # Create your views here.
@@ -56,7 +58,7 @@ def inbox(request):
     return render(request, 'conversation/inbox.html',context)
 
 
-@login_required
+
 def detailMessage(request,pk):
     
     conversation = Conversation.objects.filter(members__in=[request.user.id]).get(pk=pk)
@@ -82,6 +84,33 @@ def detailMessage(request,pk):
     
     
     
+    return render(request, 'conversation/detail.html', context)
+
+
+@login_required(login_url='login_Page')
+def deleteMessage(request, id):
+    message = get_object_or_404(ConversationMessage, id=id)
+ 
+    if request.method == 'POST':
+        message.delete()
+        return redirect('conversation:inbox')
+        
+    return render(request, 'conversation/delete_message.html',{'obj': message})
+        
+    
+def editMessage(request, id):
+    message = get_object_or_404(ConversationMessage, id=id)
+    form = ConversationMessageForm(instance= message)
+    
+    if request.method == 'POST':
+        form = ConversationMessageForm(request.POST, instance=message)
+        if form.is_valid():
+            form.save()
+            return redirect('conversation:inbox')
+    context = {
+        'form':form,
+        
+    }
     return render(request, 'conversation/detail.html', context)
 
 
